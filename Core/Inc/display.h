@@ -39,7 +39,7 @@ void Set_Address_Read(struct ILI9341*, uint16_t, uint16_t, uint16_t, uint16_t);
 void Set_Address_Write(struct ILI9341*, uint16_t, uint16_t, uint16_t, uint16_t);
 void Fill_Display(struct ILI9341*, uint16_t);
 uint16_t RGB_to_HEX(int, int, int); 
-void Fill_Area(struct ILI9341*, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t);
+void Fill_Area(struct ILI9341 *self, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t colour);
 void Print_Debug_Message(struct ILI9341*, char*);
 uint16_t* Buffer_Area(struct ILI9341 *self, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2);
 

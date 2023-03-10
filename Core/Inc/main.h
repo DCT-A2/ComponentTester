@@ -86,14 +86,20 @@ void Error_Handler(void);
 #define SPI1_TFT_MOSI_GPIO_Port GPIOA
 #define SPI2_TS_SCK_Pin GPIO_PIN_10
 #define SPI2_TS_SCK_GPIO_Port GPIOB
-#define R1_680R_Pin GPIO_PIN_3
-#define R1_680R_GPIO_Port GPIOD
-#define R2_470k_Pin GPIO_PIN_4
-#define R2_470k_GPIO_Port GPIOD
-#define R3_680R_Pin GPIO_PIN_5
-#define R3_680R_GPIO_Port GPIOD
-#define R4_470k_Pin GPIO_PIN_6
-#define R4_470k_GPIO_Port GPIOD
+#define R5_Pin GPIO_PIN_0
+#define R5_GPIO_Port GPIOD
+#define R4_Pin GPIO_PIN_1
+#define R4_GPIO_Port GPIOD
+#define R3_Pin GPIO_PIN_2
+#define R3_GPIO_Port GPIOD
+#define R2_Pin GPIO_PIN_3
+#define R2_GPIO_Port GPIOD
+#define R1_Pin GPIO_PIN_4
+#define R1_GPIO_Port GPIOD
+#define TP1_Pin GPIO_PIN_5
+#define TP1_GPIO_Port GPIOD
+#define R6_Pin GPIO_PIN_6
+#define R6_GPIO_Port GPIOD
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

@@ -18,6 +18,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "delay.h"
+#include <math.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -45,6 +47,8 @@ ADC_HandleTypeDef hadc2;
 SPI_HandleTypeDef hspi1;
 SPI_HandleTypeDef hspi2;
 
+TIM_HandleTypeDef htim1;
+
 UART_HandleTypeDef huart4;
 
 /* USER CODE BEGIN PV */
@@ -59,6 +63,7 @@ static void MX_SPI2_Init(void);
 static void MX_UART4_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_ADC2_Init(void);
+static void MX_TIM1_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -101,6 +106,7 @@ int main(void)
   MX_UART4_Init();
   MX_ADC1_Init();
   MX_ADC2_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
   //Create the display object
@@ -112,26 +118,87 @@ int main(void)
   if(ts==NULL || display == NULL){
     HAL_UART_Transmit(&huart4, (unsigned char *)"Display init failed\n\r", strlen("Display init failed\n\r"), HAL_MAX_DELAY);
   }
-
+  //HAL_UART_Transmit(&huart4, (unsigned char *)"test\n\r", strlen("d\n\r"), HAL_MAX_DELAY);
   ILI9341_Init(display);//Send the display the init sequence
   
 
-  Fill_Display(display, 0xFFFF);
+  Fill_Display(display, 0);
+  
 
-  Draw_Hollow_Rectangle(display, 0, 0, 130, 100, 2, RGB_to_HEX(17,24,31), 0xFFFF);
+  HAL_UART_Transmit(&huart4, "uart4 test\r\n", strlen("uart3 test\n\r"), HAL_MAX_DELAY);
+
+  char buffer[120];
+  char buf2[20];
+  char buf3[20];
+
+  //Draw_Hollow_Rectangle(display, 0, 0, 130, 100, 2, RGB_to_HEX(17,24,31), 0xFFFF);
 
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  float mes;
+  float volts;
+  float res;
+  float mes1;
+  float mes2;
+  uint32_t v1;
+  uint32_t v2;
+  uint16_t pulses = 0;
+  uint16_t refn = 0;
+  uint16_t samplen = 1;
+  float totalres=0;
+  float totalavg=0;
+  float currentres=0;
+  float avg;
+  double cap;
+  double thelog;
+  uint16_t xpos = 0;
+uint32_t Ref_Resistors[REF_NUM] = {R1,R2,R3,R4,R5,R6};
+uint16_t Resistor_Pins[REF_NUM] = {R1_Pin, R2_Pin, R3_Pin, R4_Pin, R5_Pin, R6_Pin};
+  HAL_TIM_Base_Start(&htim1);
+  Setup_Delay(&htim1);
+  xpos=100;
+  uint32_t charge_delay;
 
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+    /*
+    Measure Resistors
+    */
+   
+    //totalres=0;
+    //refn=0;
+    avg = totalres / samplen; //take a big total average 
+    currentres= Measure_Resistor(&hadc1);
+    if((currentres>(avg*0.9)) && (currentres<(avg*1.1))){ //if value hasn't changed by >10%, add it to the average
+      totalres+=currentres;
+      samplen++;
+    }else{
+      avg = currentres; //reset the average
+      totalres = currentres;
+      samplen=1;
+    }
+
+    if(currentres){//if Measure_Resistor 
+    Resistance_String(buf2, avg);
+    }else{
+      sprintf(buf2, "OL Ohms");
+    }
+    sprintf(buffer, "Avg res %s\r\n", buf2);
+    Fill_Area(display, 0, 100, xpos, 140, 0x0);
+    xpos = LCD_Print_Text(display, buf2, notosans, noto_sans_widths, 40, 0, 120-20, 1, 0xFFFF, 0x0);
+
+    HAL_UART_Transmit(&huart4, buffer, strlen(buffer), HAL_MAX_DELAY);
+    HAL_UART_Transmit(&huart4, "\r\n\r\n\r\n", strlen("\r\n\r\n\r\n"), HAL_MAX_DELAY);
+    
   }
+  
   /* USER CODE END 3 */
 }
 
@@ -205,7 +272,7 @@ static void MX_ADC1_Init(void)
   hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
   hadc1.Init.ScanConvMode = DISABLE;
-  hadc1.Init.ContinuousConvMode = DISABLE;
+  hadc1.Init.ContinuousConvMode = ENABLE;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
@@ -346,7 +413,7 @@ static void MX_SPI2_Init(void)
   hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi2.Init.NSS = SPI_NSS_SOFT;
-  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
+  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
   hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -358,6 +425,52 @@ static void MX_SPI2_Init(void)
   /* USER CODE BEGIN SPI2_Init 2 */
 
   /* USER CODE END SPI2_Init 2 */
+
+}
+
+/**
+  * @brief TIM1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM1_Init(void)
+{
+
+  /* USER CODE BEGIN TIM1_Init 0 */
+
+  /* USER CODE END TIM1_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM1_Init 1 */
+
+  /* USER CODE END TIM1_Init 1 */
+  htim1.Instance = TIM1;
+  htim1.Init.Prescaler = 168-1;
+  htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim1.Init.Period = 65535;
+  htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim1.Init.RepetitionCounter = 0;
+  htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim1, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM1_Init 2 */
+
+  /* USER CODE END TIM1_Init 2 */
 
 }
 
@@ -417,7 +530,8 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOA, SPI_TFT_CS_Pin|SPI_TFT_DC_Pin|SPI_TFT_RESET_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, R3_680R_Pin|R4_470k_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOD, R5_Pin|R4_Pin|R3_Pin|TP1_Pin
+                          |R6_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : SPI2_TS_IRQ_Pin */
   GPIO_InitStruct.Pin = SPI2_TS_IRQ_Pin;
@@ -439,17 +553,19 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : R1_680R_Pin R2_470k_Pin */
-  GPIO_InitStruct.Pin = R1_680R_Pin|R2_470k_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : R3_680R_Pin R4_470k_Pin */
-  GPIO_InitStruct.Pin = R3_680R_Pin|R4_470k_Pin;
+  /*Configure GPIO pins : R5_Pin R4_Pin R3_Pin TP1_Pin
+                           R6_Pin */
+  GPIO_InitStruct.Pin = R5_Pin|R4_Pin|R3_Pin|TP1_Pin
+                          |R6_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : R2_Pin R1_Pin */
+  GPIO_InitStruct.Pin = R2_Pin|R1_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
 }
