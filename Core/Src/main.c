@@ -188,11 +188,11 @@ uint16_t Resistor_Pins[REF_NUM] = {R1_Pin, R2_Pin, R3_Pin, R4_Pin, R5_Pin, R6_Pi
     if(currentres){//if Measure_Resistor 
     Resistance_String(buf2, avg);
     }else{
-      sprintf(buf2, "OL Ohms");
+      sprintf(buf2, "OL");
     }
     sprintf(buffer, "Avg res %s\r\n", buf2);
     Fill_Area(display, 0, 100, xpos, 140, 0x0);
-    xpos = LCD_Print_Text(display, buf2, notosans, noto_sans_widths, 40, 0, 120-20, 1, 0xFFFF, 0x0);
+    xpos = LCD_Print_Text_Centred(display, buf2, notosans, noto_sans_widths, 40, 100, 1, 0xFFFF, 0x0);
 
     HAL_UART_Transmit(&huart4, buffer, strlen(buffer), HAL_MAX_DELAY);
     HAL_UART_Transmit(&huart4, "\r\n\r\n\r\n", strlen("\r\n\r\n\r\n"), HAL_MAX_DELAY);

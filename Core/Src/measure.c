@@ -3,6 +3,21 @@
 uint32_t Ref_Resistors[REF_NUM] = {R1,R2,R3,R4,R5,R6};
 uint16_t Resistor_Pins[REF_NUM] = {R1_Pin, R2_Pin, R3_Pin, R4_Pin, R5_Pin, R6_Pin};
 
+/*
+PINOUT OF THE TEST BOARD:
+1 - R6 - PD6
+2 - R5 - PD0
+3 - R4 - PD1
+4 - R3 - PD2
+5 - R2 - PD3
+6 - R1 - PD4
+7 - VCC
+8 - GND
+9 - TP1 - PD5
+10 - TP2 (N/C to MCU)
+11 - Output - PA0
+*/
+
 
 
 //Function to set up the ADC. In theory this shouldn't be needed anymore. The MX function
@@ -134,13 +149,14 @@ void Pin_Mode_Output(GPIO_TypeDef *GPIOx, uint32_t pin)
 //Hacky way of printing resistances with SI units. Could probably be done much better.
 void Resistance_String(char *buffer, float resistance)
 {
+	//@ symbol is used as placeholder for omega
 	if(resistance>=900000){
-		sprintf(buffer, "%.2fMOhms", resistance/1000000.0);
+		sprintf(buffer, "%.2fM@", resistance/1000000.0);
 	}else{
 		if(resistance>=1000){
-			sprintf(buffer, "%.2fkOhms", (resistance/1000.0));
+			sprintf(buffer, "%.2fk@", (resistance/1000.0));
 		}else{
-		sprintf(buffer, "%.2fOhms", resistance);
+		sprintf(buffer, "%.2fO@", resistance);
 		}
 	}
 }
@@ -168,11 +184,11 @@ float Measure_Resistor(ADC_HandleTypeDef *ADCx)
         v2+=Measure_Voltage(ADCx);
       }
       v2/=300;
-      if((v1<3800) && (v1>300)){ //Exclude all large and small measurements, as these introduce the most error.
+      if((v1<3700) && (v1>300)){ //Exclude all large and small measurements, as these introduce the most error.
         currentres+=Calc_Resistance(i, 0, v1);
         refn++;
       }
-      if((v2<3800) && (v2>300)){
+      if((v2<3700) && (v2>300)){
         currentres+= Calc_Resistance(i, 1, v2);
         refn++;
       }

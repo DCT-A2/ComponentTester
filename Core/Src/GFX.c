@@ -1,5 +1,7 @@
 #include "GFX.h"
 
+int LCD_Text_Width(char *text, uint8_t *font_widths, uint8_t size);
+
 int LCD_Print_Text(struct ILI9341 *self, char *text, uint8_t font[], uint8_t *font_widths, uint8_t font_height, uint16_t x, uint16_t y, uint16_t size, uint16_t colour, uint16_t block_colour)
 {
 	int current_X = x;
@@ -19,6 +21,22 @@ int LCD_Print_Text(struct ILI9341 *self, char *text, uint8_t font[], uint8_t *fo
 		}
 	}
 	return current_X;
+}
+
+int LCD_Text_Width(char *text, uint8_t *font_widths, uint8_t size){
+	int w = 0;
+	for(int i=0; i<strlen(text);i++)
+	{
+		w+=font_widths[text[i] - 32] * size + size;
+	}
+	return w;
+}
+
+int LCD_Print_Text_Centred(struct ILI9341 *self, char *text, uint8_t font[], uint8_t *font_widths, uint8_t font_height, uint16_t y, uint16_t size, uint16_t colour, uint16_t block_colour )
+{
+	int w = LCD_Text_Width(text, font_widths, size);
+	int x = ( (self->x_size) - w ) / 2;
+	return LCD_Print_Text(self, text, font, font_widths, font_height, x, y, size, colour, block_colour);
 }
 
 void Draw_Character(struct ILI9341 *self, char character, uint8_t font[], uint8_t *font_widths, uint8_t font_height, uint16_t x, uint16_t y, uint16_t scale, uint16_t colour, uint16_t block_colour)

@@ -26,4 +26,5 @@ int tjpegd_Output(
 
 void Draw_Character(struct ILI9341*, char, uint8_t[], uint8_t*, uint8_t, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t);
 int LCD_Print_Text(struct ILI9341*, char*, uint8_t[], uint8_t*, uint8_t, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t);
+int LCD_Print_Text_Centred(struct ILI9341 *self, char *text, uint8_t font[], uint8_t *font_widths, uint8_t font_height, uint16_t y, uint16_t size, uint16_t colour, uint16_t block_colour);
 #endif
